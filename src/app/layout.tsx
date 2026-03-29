@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   title: "Flush — Find a Toilet Near You",
   description:
     "Find nearby toilets with amenity info and ratings. Like Google Maps, but for toilets. Starting with Gurgaon, India.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export const viewport: Viewport = {

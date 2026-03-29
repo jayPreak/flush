@@ -33,9 +33,21 @@ function MapEvents({
 }) {
   const map = useMap();
   const lastCenter = useRef({ lat: 0, lng: 0 });
+  const hasFiredInitial = useRef(false);
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
+
+    function doFetch() {
+      const center = map.getCenter();
+      const bounds = map.getBounds();
+      const radius = Math.min(
+        center.distanceTo(bounds.getNorthEast()),
+        10000
+      );
+      lastCenter.current = { lat: center.lat, lng: center.lng };
+      onMoveEnd(center.lat, center.lng, radius);
+    }
 
     function handleMoveEnd() {
       const center = map.getCenter();
@@ -47,21 +59,17 @@ function MapEvents({
       );
       if (moved < 100 && lastCenter.current.lat !== 0) return;
 
-      lastCenter.current = { lat: center.lat, lng: center.lng };
-
       clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        const bounds = map.getBounds();
-        const radius = Math.min(
-          map.getCenter().distanceTo(bounds.getNorthEast()),
-          10000
-        );
-        onMoveEnd(center.lat, center.lng, radius);
-      }, 500);
+      timeout = setTimeout(doFetch, 500);
+    }
+
+    // Fire immediately on first mount — no debounce
+    if (!hasFiredInitial.current) {
+      hasFiredInitial.current = true;
+      doFetch();
     }
 
     map.on("moveend", handleMoveEnd);
-    handleMoveEnd();
 
     return () => {
       map.off("moveend", handleMoveEnd);
@@ -89,19 +97,43 @@ export default function Map() {
   const [showAddFlow, setShowAddFlow] = useState(false);
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number } | null>(null);
   const [geoPermissionDenied, setGeoPermissionDenied] = useState(false);
+  const [showLocationPrompt, setShowLocationPrompt] = useState(true);
   const [activeTab, setActiveTab] = useState<"map" | "add" | "reviews" | "profile">("map");
 
+  // Check if permission was already granted/denied — skip the prompt if so
   useEffect(() => {
+    if (!navigator.permissions) return;
+    navigator.permissions.query({ name: "geolocation" }).then((result) => {
+      if (result.state === "granted") {
+        setShowLocationPrompt(false);
+        getCurrentPosition().then((pos) => {
+          const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setUserPos(loc);
+          setFlyTarget(loc);
+        });
+      } else if (result.state === "denied") {
+        setShowLocationPrompt(false);
+        setGeoPermissionDenied(true);
+      }
+    });
+  }, []);
+
+  function requestLocation() {
+    setShowLocationPrompt(false);
     getCurrentPosition()
       .then((pos) => {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setUserPos(loc);
-        setCenter(loc);
+        setFlyTarget(loc);
       })
       .catch(() => {
         setGeoPermissionDenied(true);
       });
-  }, []);
+  }
+
+  function skipLocation() {
+    setShowLocationPrompt(false);
+  }
 
   const fetchToilets = useCallback(
     async (lat: number, lng: number, radius: number) => {
@@ -145,6 +177,35 @@ export default function Map() {
 
   return (
     <>
+      {/* Location permission prompt */}
+      {showLocationPrompt && (
+        <div className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-sm flex items-end justify-center">
+          <div className="bg-white w-full max-w-md rounded-t-3xl p-8 pb-10 shadow-[0_-8px_40px_rgba(0,0,0,0.15)] animate-in slide-in-from-bottom duration-300">
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="material-symbols-outlined text-green-600" style={{ fontSize: 32 }}>my_location</span>
+              </div>
+              <h2 className="text-xl font-bold text-[#191c1e]">Find toilets near you</h2>
+              <p className="text-sm text-[#6d7b6c] leading-relaxed">
+                Enable location access so we can show you the closest toilets and walking directions.
+              </p>
+              <button
+                onClick={requestLocation}
+                className="w-full bg-gradient-to-br from-[#006e2f] to-[#22c55e] text-white py-4 rounded-2xl font-bold text-base shadow-md active:scale-[0.98] transition-transform mt-2"
+              >
+                Enable Location
+              </button>
+              <button
+                onClick={skipLocation}
+                className="text-sm text-[#6d7b6c] font-medium py-2"
+              >
+                Skip for now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Location denied banner */}
       {geoPermissionDenied && (
         <div className="fixed top-0 left-0 right-0 z-[60] bg-[#d7a400] text-white py-1 px-4 text-center text-[10px] font-bold tracking-wider uppercase flex items-center justify-center gap-2">
@@ -168,8 +229,8 @@ export default function Map() {
         </div>
       </header>
 
-      {/* Map Canvas */}
-      <div className={`absolute inset-0 ${geoPermissionDenied ? "pt-[88px]" : "pt-16"}`}>
+      {/* Map Canvas — z-0 keeps Leaflet's internal z-indexes below fixed overlays (drawer z-50) */}
+      <div className={`absolute inset-0 z-0 ${geoPermissionDenied ? "pt-[88px]" : "pt-16"}`}>
         <MapContainer
           center={[center.lat, center.lng]}
           zoom={15}

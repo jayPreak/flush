@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#22c55e"/>
+  <!-- Drop/pin shape -->
+  <path d="M16 4C11.6 4 8 7.4 8 11.5C8 17.25 16 28 16 28C16 28 24 17.25 24 11.5C24 7.4 20.4 4 16 4Z" fill="white" fill-opacity="0.95"/>
+  <!-- WC text -->
+  <text x="16" y="15.5" font-family="Arial,sans-serif" font-size="7" font-weight="800" fill="#22c55e" text-anchor="middle" dominant-baseline="middle">WC</text>
+</svg>
