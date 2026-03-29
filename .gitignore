@@ -38,6 +38,10 @@ yarn-error.log*
 /test-results/
 /playwright-report/
 
+# test screenshots & debug scripts
+/tests/screenshots/
+/tests/debug-*
+
 # vercel
 .vercel
 
