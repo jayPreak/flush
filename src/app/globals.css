@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-inter);
+  --font-heading: var(--font-inter);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -46,6 +46,20 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Flush brand colors */
+  --color-flush-green: #22c55e;
+  --color-flush-green-dark: #006e2f;
+  --color-flush-red: #b61722;
+  --color-flush-amber: #d7a400;
+  --color-flush-surface: #f7f9fb;
+  --color-flush-surface-low: #f2f4f6;
+  --color-flush-surface-high: #e6e8ea;
+  --color-flush-surface-highest: #e0e3e5;
+  --color-flush-on-surface: #191c1e;
+  --color-flush-on-surface-variant: #3d4a3d;
+  --color-flush-outline: #6d7b6c;
+  --color-flush-outline-variant: #bccbb9;
 }
 
 :root {
@@ -124,7 +138,51 @@
   body {
     @apply bg-background text-foreground;
   }
-  html {
-    @apply font-sans;
-  }
+}
+
+/* Material Symbols */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* Emergency pulse animation */
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(182, 23, 34, 0.7); }
+  70% { box-shadow: 0 0 0 15px rgba(182, 23, 34, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(182, 23, 34, 0); }
+}
+.animate-emergency-pulse {
+  animation: pulse-red 2s infinite;
+}
+
+/* Hide scrollbar but allow scrolling */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Leaflet container must have explicit height */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+/* Fix z-index conflicts with UI overlays */
+.leaflet-pane {
+  z-index: 400;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 500;
+}
+
+/* Hide leaflet default attribution styling for cleaner look */
+.leaflet-control-attribution {
+  font-size: 9px !important;
+  background: rgba(255,255,255,0.6) !important;
+  backdrop-filter: blur(4px);
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
 }
